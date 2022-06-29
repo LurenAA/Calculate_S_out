@@ -9,8 +9,8 @@ class FifoSeg:
         self.t = t
         self.is_ram_2_fifo_trans = is_trans
 
-    def display(self, end = '\n'):
+    def display(self, end='\n'):
         print("t: %8.3fns, is_ram_2_fifo_trans: %d" % (
             self.t * 1e9, self.is_ram_2_fifo_trans),
-            end= end
+            end=end
             )
