@@ -37,9 +37,14 @@ def get_seg_trans_info(
     通过序列长度、开始时间、输入速度计算出该序列传输结束后的位置
     以及经过的完整周期数
     '''
-    assert T_RTI >= 0 and T_REFI >= 0 and S_IN >= 0
-    assert len >= 0 and t_start >= 0 and t_start <= T_REFI
-    assert T_RTI < T_REFI
+    try:
+        assert T_RTI >= 0 and T_REFI >= 0 and S_IN >= 0
+        assert len >= 0
+        assert t_start >= 0
+        assert t_start <= T_REFI
+        assert T_RTI < T_REFI
+    except Exception as x:
+        raise x  # debug用
 
     if t_start < T_RTI:
         t_start = T_RTI
@@ -63,7 +68,7 @@ def get_seg_trans_info(
             len - len_2_1st_refresh -
             n_complete_cycle_pass * (S_IN) * (T_REFI - T_RTI)
             ) / S_IN + T_RTI
-    
+
     return SegInfo(t_start, t_end, n_cycle_pass)
 
 
@@ -107,6 +112,12 @@ def build_seg_info_list(
         sum += val
         if sum >= N:
             break
+
+    from fifo_trans_module import FifoCantFull
+    # 序列太短FIFO无法充满
+    if sum < N:
+        raise FifoCantFull
+
     waveform_pts[idx] = sum - N
     waveform_pts = (
         waveform_pts[idx:] if waveform_pts[idx] else waveform_pts[idx + 1:]

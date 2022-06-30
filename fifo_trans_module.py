@@ -5,19 +5,23 @@ from seg_info import build_seg_info_list
 from fifo_seg import FifoSeg
 
 
+class FifoParameterNotSet(Exception):
+    pass
+
+
+class FifoCantFull(Exception):
+    pass
+
+
 class FifoTransModule:
-    def __init__(self, waveform_pts: list,
-                 t_1st_start: float,
-                 T_REFI, T_RTI, T_SW, S_IN, S_OUT, N
+    def __init__(self, waveform_pts: list = None,
+                 t_1st_start: float = None,
+                 T_REFI=None, T_RTI=None,
+                 T_SW=None, S_IN=None,
+                 S_OUT=None, N=None
                  ) -> None:
         # 获取序列传输信息的列表
-        self.__seg_info_list = build_seg_info_list(
-            waveform_pts, t_1st_start, T_REFI, T_RTI, T_SW, S_IN, N
-        )
-
-        self.__fifo_cycle_list = FifoTransModule.bulid_fifo_ref_cycle_list(
-            self.__seg_info_list, t_1st_start, T_REFI, T_RTI, T_SW, S_IN, N
-        )
+        self.__waveform_pts = waveform_pts
         self.__t_1st_start = t_1st_start
         self.__T_REFI = T_REFI
         self.__T_RTI = T_RTI
@@ -25,12 +29,50 @@ class FifoTransModule:
         self.__S_IN = S_IN
         self.__S_OUT = S_OUT
         self.__N = N
+        self.__seg_info_list = None
+        self.__fifo_cycle_list = None
+
+    def set_waveform_pts(self, waveform_pts):
+        self.__waveform_pts = waveform_pts
+        self.__fifo_cycle_list = None
+        self.__seg_info_list = None
+
+    def set_t_1st_start(self, t_1st_start):
+        self.__t_1st_start = t_1st_start
+        self.__fifo_cycle_list = None
+        self.__seg_info_list = None
+
+    def set_s_in(self, s_in):
+        self.__S_IN = s_in
+        self.__fifo_cycle_list = None
+        self.__seg_info_list = None
+
+    def get_n(self): return self.__N
+
+    def set_n(self, n: int):
+        assert n > 0
+
+        if n != self.__N:
+            self.__N = n
+            self.__fifo_cycle_list = None
+            self.__seg_info_list = None
+
+    def get_s_out(self): return self.__S_OUT
+
+    def set_s_out(self, new_s_out: float):
+        assert new_s_out > 0
+
+        self.__S_OUT = new_s_out
 
     def display_fifo_cycle_list(self):
+        if self.__fifo_cycle_list is None:
+            return
         for x in self.__fifo_cycle_list:
             x.display()
-    
+
     def display_seg_info_list(self):
+        if self.__seg_info_list is None:
+            return
         for x in self.__seg_info_list:
             x.display()
 
@@ -38,6 +80,33 @@ class FifoTransModule:
         '''
         测试FIFO在传输过程中是否会空
         '''
+        if (  # 缺少参数报错
+            not self.__waveform_pts or
+            not self.__S_OUT or
+            not self.__N or
+            not self.__T_REFI or
+            self.__t_1st_start is None or
+            not self.__S_IN or
+            not self.__T_SW or
+            not self.__T_RTI
+        ):
+            raise FifoParameterNotSet
+
+        if not self.__fifo_cycle_list or not self.__seg_info_list:
+            self.__seg_info_list = build_seg_info_list(
+                self.__waveform_pts, self.__t_1st_start,
+                self.__T_REFI, self.__T_RTI,
+                self.__T_SW, self.__S_IN, self.__N
+            )
+
+            self.__fifo_cycle_list = (
+                FifoTransModule.bulid_fifo_ref_cycle_list(
+                    self.__seg_info_list, self.__t_1st_start,
+                    self.__T_REFI, self.__T_RTI,
+                    self.__T_SW, self.__S_IN, self.__N
+                )
+            )
+
         current_fifo_n = self.__N
         for idx, cycle in enumerate(self.__fifo_cycle_list):
             if show_debug_info:
