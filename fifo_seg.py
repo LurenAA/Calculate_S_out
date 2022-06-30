@@ -1,3 +1,6 @@
+import sys
+
+
 class FifoSeg:
     '''
         表示刷新周期中一段长度为t的时间，
@@ -9,8 +12,8 @@ class FifoSeg:
         self.t = t
         self.is_ram_2_fifo_trans = is_trans
 
-    def display(self, end='\n'):
+    def display(self, end='\n', file=sys.stdout):  # 打印调试信息
         print("t: %8.3fns, is_ram_2_fifo_trans: %d" % (
             self.t * 1e9, self.is_ram_2_fifo_trans),
-            end=end
+            end=end, file=file
             )
