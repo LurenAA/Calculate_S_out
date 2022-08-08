@@ -58,30 +58,6 @@ class TestBinarySearch(unittest.TestCase):
 
         return fifo_trans_module
 
-    @staticmethod
-    def __print_fifo_trans_info(fifo_trans_module: FifoTransModule, f):
-        # 打印FIFO传输的信息到文件
-
-        # 创建文件夹
-        print("T_REFI:%8.3fns" % (fifo_trans_module.get_t_refi() * 1e9),
-              file=f)
-        print("T_RTI:%8.3fns" % (fifo_trans_module.get_t_rti() * 1e9),
-              file=f)
-        print("T_SW:%8.3fns" % (fifo_trans_module.get_t_sw() * 1e9),
-              file=f)
-        print("Sin: %8.3fGSa/s\nSout: %8.3fGSa/s" %
-              (fifo_trans_module.get_s_in() * 1e-9,
-               fifo_trans_module.get_s_out() * 1e-9), file=f)
-        print("get_t_1st_start: %8.3fns" %
-              (fifo_trans_module.get_t_1st_start() * 1e9), file=f)
-        print("FIFO N: %d" % (fifo_trans_module.get_n()), file=f)
-        print("waveform_pts:\n", fifo_trans_module.get_waveform_pts(),
-              file=f)
-        print("display_fifo_cycle_list:", file=f)
-        fifo_trans_module.display_fifo_cycle_list(f)
-        print("display_seg_info_list:", file=f)
-        fifo_trans_module.display_seg_info_list(f)
-
     def test_binary_search_n(self):
         fifo_trans_module = FifoTransModule(  # 创建FIFO传输模型对象
             T_REFI=T_REFI, T_RTI=T_RTI, T_SW=T_SW
@@ -118,9 +94,7 @@ class TestBinarySearch(unittest.TestCase):
                     TestBinarySearch.dir_str + "/fifo_trans" +
                     str(TestBinarySearch.file_index), 'w'
                 ) as f:
-                    TestBinarySearch.__print_fifo_trans_info(
-                        fifo_trans_module, f
-                        )
+                    fifo_trans_module.print_fifo_trans_info(f)
 
                     if_empty = fifo_trans_module.check_empty(True, file=f)
                     self.assertTrue(not if_empty)
@@ -169,8 +143,8 @@ class TestBinarySearch(unittest.TestCase):
                     TestBinarySearch.dir_str + "/fifo_trans" +
                     str(TestBinarySearch.file_index), 'w'
                 ) as f:
-                    TestBinarySearch.__print_fifo_trans_info(
-                        fifo_trans_module, f)
+                    fifo_trans_module.print_fifo_trans_info(f)
+                    
                     if_empty = fifo_trans_module.check_empty(True, file=f)
                     self.assertTrue(not if_empty)
 

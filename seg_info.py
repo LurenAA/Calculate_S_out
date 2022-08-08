@@ -50,7 +50,7 @@ def get_seg_trans_info(
 
     if t_start < T_RTI:
         t_start = T_RTI
-
+    # 取整问题处
     len_2_1st_refresh = (T_REFI - t_start) * S_IN  # 开始位置离下一个刷新的距离
     n_cycle_pass = 1
     t_end = 0
@@ -60,15 +60,16 @@ def get_seg_trans_info(
     else:  # 跨越复数个周期
 
         # 中间完整传输的刷新周期数
-        n_complete_cycle_pass = math.floor(
+        n_complete_cycle_pass = (
             (len - len_2_1st_refresh)
             /
             (S_IN * (T_REFI - T_RTI))
         )
+        n_complete_cycle_pass = math.floor(n_complete_cycle_pass)
 
         assert n_complete_cycle_pass >= 0
         # 开始到结束经过的周期数
-        n_cycle_pass += n_complete_cycle_pass if n_complete_cycle_pass else 1
+        n_cycle_pass += n_complete_cycle_pass + 1
 
         t_end = (  # 结束位置计算
             len - len_2_1st_refresh -
@@ -120,7 +121,7 @@ def build_seg_info_list(
         if wave_len_sum >= N:
             break
 
-    from fifo_trans_module import FifoCantFull
+    from fifo_trans_module import FifoCantFull  # 避免交叉引用
     # 序列太短FIFO无法充满
     if wave_len_sum < N:
         raise FifoCantFull
@@ -136,7 +137,7 @@ def build_seg_info_list(
     for idx, wave_len in enumerate(waveform_pts):
         if not idx:
             seg_info_tmp = get_seg_trans_info(
-                wave_len, t_1st_start, T_RTI, T_REFI, S_IN
+                wave_len, t_1st_start + T_SW, T_RTI, T_REFI, S_IN
                )
         else:
             is_in_next_cycle, t_next_start = get_next_seg_start(

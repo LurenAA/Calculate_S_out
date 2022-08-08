@@ -35,6 +35,25 @@ class FifoTransModule:
         self.__seg_info_list = None  # 序列传输信息SegInfo的序列
         self.__fifo_cycle_list = None  # 刷新周期传输模型FifoRefCircle的序列
 
+    def __refresh_seg_and_cycle_list(self):
+        # 如果更改了FIFO传输模型的参数，更新两个序列
+        if not (None in (self.__waveform_pts, self.__t_1st_start,
+                self.__T_REFI, self.__T_RTI,
+                self.__T_SW, self.__S_IN, self.__N)):
+            self.__seg_info_list = build_seg_info_list(
+                self.__waveform_pts, self.__t_1st_start,
+                self.__T_REFI, self.__T_RTI,
+                self.__T_SW, self.__S_IN, self.__N
+            )
+
+            self.__fifo_cycle_list = (
+                FifoTransModule.bulid_fifo_ref_cycle_list(
+                    self.__seg_info_list, self.__t_1st_start,
+                    self.__T_REFI, self.__T_RTI,
+                    self.__T_SW, self.__S_IN, self.__N
+                )
+            )
+
     def get_t_refi(self):
         return self.__T_REFI
 
@@ -46,8 +65,7 @@ class FifoTransModule:
 
     def set_waveform_pts(self, waveform_pts):
         self.__waveform_pts = waveform_pts
-        self.__fifo_cycle_list = None
-        self.__seg_info_list = None
+        self.__refresh_seg_and_cycle_list()
 
     def get_waveform_pts(self):
         return self.__waveform_pts
@@ -57,13 +75,11 @@ class FifoTransModule:
 
     def set_t_1st_start(self, t_1st_start):
         self.__t_1st_start = t_1st_start
-        self.__fifo_cycle_list = None
-        self.__seg_info_list = None
+        self.__refresh_seg_and_cycle_list()
 
     def set_s_in(self, s_in):
         self.__S_IN = s_in
-        self.__fifo_cycle_list = None
-        self.__seg_info_list = None
+        self.__refresh_seg_and_cycle_list()
 
     def get_s_in(self):
         return self.__S_IN
@@ -75,8 +91,7 @@ class FifoTransModule:
 
         if n != self.__N:
             self.__N = n
-            self.__fifo_cycle_list = None
-            self.__seg_info_list = None
+            self.__refresh_seg_and_cycle_list()
 
     def get_s_out(self): return self.__S_OUT
 
@@ -99,10 +114,33 @@ class FifoTransModule:
         for x in self.__seg_info_list:
             x.display(file=file)
 
+    def print_fifo_trans_info(self, f):
+        # 打印FIFO传输的信息到文件
+
+        # 创建文件夹
+        print("T_REFI:%8.3fns" % (self.get_t_refi() * 1e9),
+              file=f)
+        print("T_RTI:%8.3fns" % (self.get_t_rti() * 1e9),
+              file=f)
+        print("T_SW:%8.3fns" % (self.get_t_sw() * 1e9),
+              file=f)
+        print("Sin: %8.3fGSa/s\nSout: %8.3fGSa/s" %
+              (self.get_s_in() * 1e-9,
+               self.get_s_out() * 1e-9), file=f)
+        print("get_t_1st_start: %8.3fns" %
+              (self.get_t_1st_start() * 1e9), file=f)
+        print("FIFO N: %d" % (self.get_n()), file=f)
+        print("waveform_pts:\n", self.get_waveform_pts(),
+              file=f)
+        print("display_seg_info_list:", file=f)
+        self.display_seg_info_list(f)
+        print("display_fifo_cycle_list:", file=f)
+        self.display_fifo_cycle_list(f)
+
     # 检测传输过程中FIFO是否会断流
     def check_empty(
         self, show_debug_info: bool = False, file=sys.stdout
-       ) -> bool:
+    ) -> bool:
         '''
         测试FIFO在传输过程中是否会空
         '''
@@ -118,22 +156,6 @@ class FifoTransModule:
         ):
             raise FifoParameterNotSet
 
-        # 如果更改了FIFO传输模型的参数，更新两个序列
-        if not self.__fifo_cycle_list or not self.__seg_info_list:
-            self.__seg_info_list = build_seg_info_list(
-                self.__waveform_pts, self.__t_1st_start,
-                self.__T_REFI, self.__T_RTI,
-                self.__T_SW, self.__S_IN, self.__N
-            )
-
-            self.__fifo_cycle_list = (
-                FifoTransModule.bulid_fifo_ref_cycle_list(
-                    self.__seg_info_list, self.__t_1st_start,
-                    self.__T_REFI, self.__T_RTI,
-                    self.__T_SW, self.__S_IN, self.__N
-                )
-            )
-
         if show_debug_info:  # 调试信息
             print("check empty", file=file)
         current_fifo_n = self.__N  # 记录fifo当前点数
@@ -141,7 +163,7 @@ class FifoTransModule:
             if show_debug_info:  # 调试信息
                 print("cycle %2d" % (idx + 1), file=file)
             for seg in cycle:
-                delta_n = math.ceil(  # 波形点变化量
+                delta_n = math.floor(  # 波形点变化量
                     seg.t * (
                         (
                             (self.__S_IN - self.__S_OUT)
@@ -162,7 +184,9 @@ class FifoTransModule:
                     print(
                         ("fifo_n_before: %5d\t"
                          "delta_n: %5d\tfifo_n_after: %5d") % (
-                            fifo_n_before, delta_n, current_fifo_n), file=file
+                            fifo_n_before, delta_n, current_fifo_n),
+                        file=file,
+                        flush=True
                     )
 
                 if current_fifo_n < 0:  # 判断断流
@@ -186,6 +210,10 @@ class FifoTransModule:
         if t_1st_start < T_RTI:  # 当FIFO开始输出时，SDRAM第一个序列还没有开始向FIFO输出
             current_ref_cycle.append_fifo_seg(
                 FifoSeg(T_RTI - t_1st_start, False)
+            )
+        else:
+            current_ref_cycle.append_fifo_seg(
+                FifoSeg(T_SW, False)
             )
 
         for i in range(0, len(seg_info_list)):
