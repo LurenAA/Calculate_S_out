@@ -8,17 +8,19 @@ import os
 from fifo_trans_module import FifoTransModule
 
 
-K = 2
-N = 3
-B = 1
+K = 34
+N = 7
+B = (
+    lambda K, N: math.ceil(K/N)
+)(K, N)
 T_REFI = 7.8e-6
 T_SW = 30e-9
 T_RTI = 190e-9
 BL = 8
-S_IN = 2133e6
-S_OUT = math.floor((N * T_REFI - K * T_SW - N * T_RTI) / (N * T_REFI) * S_IN)
+S_IN = 1600e6 * 16 / 12
+S_OUT = (N * T_REFI - K * T_SW - N * T_RTI) / (N * T_REFI) * S_IN
 T_SEQ = (N * T_REFI - K * T_SW - N * T_RTI) / K
-N_SEQ = math.ceil(T_SEQ * S_IN)
+N_SEQ = T_SEQ * S_IN
 N_FIFO = math.ceil(abs(-(B*N - K)*(-B*N + K + N) / N * T_SW * S_IN -
                        (T_RTI + B * T_SW) * S_IN - K / N * T_SW * S_IN))
 

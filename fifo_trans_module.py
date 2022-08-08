@@ -130,6 +130,8 @@ class FifoTransModule:
         print("get_t_1st_start: %8.3fns" %
               (self.get_t_1st_start() * 1e9), file=f)
         print("FIFO N: %d" % (self.get_n()), file=f)
+        print("waveform_pts_size:\n", len(self.get_waveform_pts()),
+              file=f)
         print("waveform_pts:\n", self.get_waveform_pts(),
               file=f)
         print("display_seg_info_list:", file=f)
@@ -163,14 +165,14 @@ class FifoTransModule:
             if show_debug_info:  # 调试信息
                 print("cycle %2d" % (idx + 1), file=file)
             for seg in cycle:
-                delta_n = math.floor(  # 波形点变化量
-                    seg.t * (
-                        (
-                            (self.__S_IN - self.__S_OUT)
-                            if seg.is_ram_2_fifo_trans else (-self.__S_OUT)
-                        )
+                # 波形点变化量
+                delta_n = seg.t * (
+                    (
+                        (self.__S_IN - self.__S_OUT)
+                        if seg.is_ram_2_fifo_trans else (-self.__S_OUT)
                     )
                 )
+
                 if show_debug_info:  # 调试信息
                     print("\t", end="", file=file)
                     seg.display("\t", file=file)
@@ -189,7 +191,7 @@ class FifoTransModule:
                         flush=True
                     )
 
-                if current_fifo_n < 0:  # 判断断流
+                if current_fifo_n < 0.0:  # 判断断流
                     return True
 
         return False

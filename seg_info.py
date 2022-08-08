@@ -60,12 +60,11 @@ def get_seg_trans_info(
     else:  # 跨越复数个周期
 
         # 中间完整传输的刷新周期数
-        n_complete_cycle_pass = (
+        n_complete_cycle_pass = math.floor(
             (len - len_2_1st_refresh)
             /
             (S_IN * (T_REFI - T_RTI))
         )
-        n_complete_cycle_pass = math.floor(n_complete_cycle_pass)
 
         assert n_complete_cycle_pass >= 0
         # 开始到结束经过的周期数
