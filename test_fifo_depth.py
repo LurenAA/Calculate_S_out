@@ -11,15 +11,16 @@ from fifo_trans_module import FifoTransModule
 K = 34
 N = 7
 B = math.ceil(K/N)
-T_REFI = 7.8e-6
-T_SW = 30e-9
-T_RTI = 190e-9
+T_REFI = 7.8e-6  # sec
+T_SW = 30e-9  # sec
+T_RTI = 190e-9  # sec
 BL = 8
-S_IN = math.ceil(1600e6 * 16 / 12)
-S_OUT = math.floor((N * T_REFI - K * T_SW - N * T_RTI) / (N * T_REFI) * S_IN)
-T_SEQ = (N * T_REFI - K * T_SW - N * T_RTI) / K
-N_SEQ = math.ceil(T_SEQ * S_IN)
-N_FIFO = math.ceil(abs(-(B*N - K)*(-B*N + K + N) / N * T_SW * S_IN -
+PT_LEN = 2  # byte
+S_IN = 1600e6 * 8 / PT_LEN  # pts
+S_OUT = (N * T_REFI - K * T_SW - N * T_RTI) / (N * T_REFI) * S_IN
+T_SEQ = (N * T_REFI - K * T_SW - N * T_RTI) / K  # sec
+N_SEQ = math.ceil(T_SEQ * S_IN)  # pts
+N_FIFO = math.ceil(abs(-(B*N - K)*(-B*N + K + N) / N * T_SW * S_IN -      # pts
                        (T_RTI + B * T_SW) * S_IN - K / N * T_SW * S_IN))
 
 TEST_TIMES = 100
@@ -111,8 +112,17 @@ class TestFifoDepth(unittest.TestCase):
                 TestFifoDepth.dir_str + "/TestFifoN " +
                 str(TestFifoDepth.file_index), 'w'
             ) as f:
-                print("k: %d, n: %d, n_fifo: %d" % (k, n, n_fifo), file = f)
+                print("k: %d, n: %d, n_fifo: %d" % (k, n, n_fifo), file=f)
+
+
+def print_constant_parameter_info():
+    print("S_IN: %d pts" % S_IN)
+    print("S_OUT: %d pts" % S_OUT)
+    print("T_SEQ: %.6f ns" % (T_SEQ * 1e9))
+    print("N_SEQ: %d pts" % N_SEQ)
+    print("N_FIFO: %d pts" % N_FIFO)
 
 
 if __name__ == '__main__':
-    unittest.main()
+    print_constant_parameter_info()
+    # unittest.main()

@@ -21,7 +21,9 @@ class FifoTransModule:
                  t_1st_start: float = None,
                  T_REFI=None, T_RTI=None,
                  T_SW=None, S_IN=None,
-                 S_OUT=None, N=None
+                 S_OUT=None, N=None,
+                 bandwidth=64,
+                 bl=8, pt_len=16
                  ) -> None:
         # 获取序列传输信息的列表
         self.__waveform_pts = waveform_pts  # 波形点数长度的序列
@@ -32,8 +34,9 @@ class FifoTransModule:
         self.__S_IN = S_IN
         self.__S_OUT = S_OUT
         self.__N = N
-        self.__seg_info_list = None  # 序列传输信息SegInfo的序列
-        self.__fifo_cycle_list = None  # 刷新周期传输模型FifoRefCircle的序列
+
+        # 64bit(bandwidth) * 8(BL) / (16 bit/pt)
+        self.__pts_transfer_per_bl = bandwidth * bl / pt_len  # pts/bl
 
     def __refresh_seg_and_cycle_list(self):
         # 如果更改了FIFO传输模型的参数，更新两个序列
@@ -139,7 +142,18 @@ class FifoTransModule:
         print("display_fifo_cycle_list:", file=f)
         self.display_fifo_cycle_list(f)
 
+    def __floor_to_bl(self, x):
+        return (math.floor(x / self.__pts_transfer_per_bl) *
+                self.__pts_transfer_per_bl
+                )
+
+    def __ceil_to_bl(self, x):
+        return (math.ceil(x / self.__pts_transfer_per_bl) *
+                self.__pts_transfer_per_bl
+                )
+
     # 检测传输过程中FIFO是否会断流
+
     def check_empty(
         self, show_debug_info: bool = False, file=sys.stdout
     ) -> bool:
@@ -160,10 +174,68 @@ class FifoTransModule:
 
         if show_debug_info:  # 调试信息
             print("check empty", file=file)
+
         current_fifo_n = self.__N  # 记录fifo当前点数
-        for idx, cycle in enumerate(self.__fifo_cycle_list):
+        current_t = self.__t_1st_start  # 当前时刻
+
+        for idx, pts_info in enumerate(self.__waveform_pts):
+
             if show_debug_info:  # 调试信息
                 print("cycle %2d" % (idx + 1), file=file)
+
+            n_trans = pts_info.n_trans  # 对齐DDR后一个BL要传输的数据量
+            n_seq = pts_info.n_seq  # 实际有用的数据量
+
+            # 每个序列开始给一个切换
+            if current_t > self.__T_RTI:
+                current_t += self.__T_SW
+                current_fifo_n -= self.__floor_to_bl(
+                    self.__T_SW * self.__S_OUT)
+
+            elif current_t < self.__T_RTI:
+                current_fifo_n -= self.__floor_to_bl(
+                    (self.__T_RTI - current_t) * self.__S_OUT
+                )
+                current_t = self.__T_RTI
+
+            elif(current_t + self.__T_SW > self.__T_REFI or
+                 math.isclose(
+                    current_t + self.__T_SW, self.__T_REFI, rel_tol=1e-20
+                 )
+                 ):
+                current_fifo_n -= self.__floor_to_bl(
+                    (self.__T_REFI - current_t) * self.__S_OUT
+                )
+                current_t = 0
+
+            while current_fifo_n >= 0 or n_trans:
+                # T_RTI
+                if not current_t:
+                    current_t += self.__T_RTI
+                    current_fifo_n -= self.__floor_to_bl(
+                        self.__T_SW * self.__S_OUT)
+                    continue
+                
+                # 从当前时刻传输到该刷新周期结束时，ddr向FIFO输出的点数
+                ddr2fifo_refi = self.__floor_to_bl(
+                    (self.__T_REFI - current_t) * self.__S_OUT)
+
+                if ddr2fifo_refi <= n_trans:
+                    
+                    ddr2fifo_refi_delta_n = (
+                        self.__floor_to_bl((self.__T_REFI - current_t) * self.__S_IN)
+                        -
+                        self.__floor_to_bl((self.__T_REFI - current_t) * self.__S_OUT)
+                    )
+
+                    if ddr2fifo_refi_delta_n + current_fifo_n > self.__N:
+                        # 提前满了
+                        t_full = (self.__N - current_fifo_n)
+                else:
+
+            if not current_fifo_n:
+                return True
+
             for seg in cycle:
                 # 波形点变化量
                 delta_n = seg.t * (
