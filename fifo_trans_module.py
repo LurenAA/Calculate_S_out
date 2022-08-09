@@ -118,19 +118,19 @@ class FifoTransModule:
         # 打印FIFO传输的信息到文件
 
         # 创建文件夹
-        print("T_REFI:%8.3fns" % (self.get_t_refi() * 1e9),
+        print("T_REFI: %8.3fns" % (self.get_t_refi() * 1e9),
               file=f)
-        print("T_RTI:%8.3fns" % (self.get_t_rti() * 1e9),
+        print("T_RTI: %8.3fns" % (self.get_t_rti() * 1e9),
               file=f)
-        print("T_SW:%8.3fns" % (self.get_t_sw() * 1e9),
+        print("T_SW: %8.3fns" % (self.get_t_sw() * 1e9),
               file=f)
-        print("Sin: %8.3fGSa/s\nSout: %8.3fGSa/s" %
+        print("Sin: %8.9fGSa/s\nSout: %8.9fGSa/s" %
               (self.get_s_in() * 1e-9,
                self.get_s_out() * 1e-9), file=f)
         print("get_t_1st_start: %8.3fns" %
               (self.get_t_1st_start() * 1e9), file=f)
         print("FIFO N: %d" % (self.get_n()), file=f)
-        print("waveform_pts_size:\n", len(self.get_waveform_pts()),
+        print("waveform_pts_size: ", len(self.get_waveform_pts()),
               file=f)
         print("waveform_pts:\n", self.get_waveform_pts(),
               file=f)

@@ -10,22 +10,22 @@ from fifo_trans_module import FifoTransModule
 
 K = 34
 N = 7
-B = (
-    lambda K, N: math.ceil(K/N)
-)(K, N)
+B = math.ceil(K/N)
 T_REFI = 7.8e-6
 T_SW = 30e-9
 T_RTI = 190e-9
 BL = 8
-S_IN = 1600e6 * 16 / 12
-S_OUT = (N * T_REFI - K * T_SW - N * T_RTI) / (N * T_REFI) * S_IN
+S_IN = math.ceil(1600e6 * 16 / 12)
+S_OUT = math.floor((N * T_REFI - K * T_SW - N * T_RTI) / (N * T_REFI) * S_IN)
 T_SEQ = (N * T_REFI - K * T_SW - N * T_RTI) / K
-N_SEQ = T_SEQ * S_IN
+N_SEQ = math.ceil(T_SEQ * S_IN)
 N_FIFO = math.ceil(abs(-(B*N - K)*(-B*N + K + N) / N * T_SW * S_IN -
                        (T_RTI + B * T_SW) * S_IN - K / N * T_SW * S_IN))
 
 TEST_TIMES = 100
 MAX_WAVEFORM_PTS_LEN = 1000
+MAX_K = 100
+MAX_N = 1000
 
 
 class TestFifoDepth(unittest.TestCase):
@@ -89,6 +89,29 @@ class TestFifoDepth(unittest.TestCase):
 
                 is_empty = fifo_trans_module.check_empty(True, f)
                 self.assertTrue(not is_empty)
+
+    def test_fifo_n(self):
+        for i in range(TEST_TIMES):
+
+            random.seed(time.time_ns() + MAX_K)
+            k = random.randint(1, MAX_K)
+
+            random.seed(time.time_ns() + MAX_N)
+            n = random.randint(1, MAX_N)
+
+            b = math.ceil(K/N)
+
+            n_fifo = math.ceil(
+                abs(-(b*n - k)*(-b*n + k + n) / n * T_SW * S_IN -
+                    (T_RTI + b * T_SW) * S_IN - k / n * T_SW * S_IN)
+            )
+
+            TestFifoDepth.file_index += 1
+            with open(
+                TestFifoDepth.dir_str + "/TestFifoN " +
+                str(TestFifoDepth.file_index), 'w'
+            ) as f:
+                print("k: %d, n: %d, n_fifo: %d" % (k, n, n_fifo), file = f)
 
 
 if __name__ == '__main__':
