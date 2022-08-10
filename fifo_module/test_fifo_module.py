@@ -96,7 +96,7 @@ class TestFifoModule(unittest.TestCase):
 
 
 def print_constant_parameter_info(f=sys.stdout):
-    print("K: %d, N: %d" % (K, D), file=f)
+    print("K: %d, N: %d" % (K, N), file=f)
     print("S_IN: %d  64bytes/s" % S_IN, file=f)
     print("S_OUT: %d  64bytes/s" % S_OUT, file=f)
     print("T_SEQ: %.6f ns" % (T_SEQ * 1e9), file=f)
