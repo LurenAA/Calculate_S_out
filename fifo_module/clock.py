@@ -51,6 +51,7 @@ class Clock:
                ):
                 self.__send_start_flag = True
                 self.__fifo_out_t = self.__t_start
+                self.set_sw()
 
             return
 
@@ -107,7 +108,7 @@ class Clock:
             rel_tol=1e-11)
             or
             self.__current_t > self.__current_cycle_num * self.__T_REFI
-             ):
+            ):
             self.__current_cycle_num += 1
 
     def fifo_in_finish(self):
@@ -142,7 +143,7 @@ class Clock:
         return (self.__sw_end_time - self.__current_t > 0
                 or math.isclose(
                     self.__current_t, self.__sw_end_time, rel_tol=1e-11
-                    )
+                )
                 )
 
     def is_rti(self):

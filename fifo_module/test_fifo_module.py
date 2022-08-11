@@ -105,8 +105,6 @@ class TestFifoModule(unittest.TestCase):
                         cur_fifo_n = fifo.get_n_64byte_fifo_current()
                         t_in_refi = clock.get_current_t_in_refi()
                         cur_wfm_64byte = ddr_sdram.get_current_wfm_64byte()
-                        if cur_wfm_64byte == N_SEQ:
-                            cur_wfm_64byte = 0
                         in_rti = clock.is_rti()
 
                         # 打印信息
