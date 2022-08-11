@@ -37,3 +37,5 @@ class Sdram:
     def get_finished_tranfer(self):
         return self.__finished_tranfer
 
+    def get_current_wfm_64byte(self):
+        return self.__current_wfm_64byte
