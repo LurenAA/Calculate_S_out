@@ -45,7 +45,7 @@ class Clock:
 
             if(math.isclose(self.__current_t,
                             self.__t_start,
-                            rel_tol=1e-11)
+                            rel_tol=1e-12)
                or
                 self.__t_start < self.__current_t
                ):
@@ -68,7 +68,7 @@ class Clock:
             self.__current_t = self.__fifo_in_t
             fifo_in_time_flag = True
 
-        elif math.isclose(fifo_in_t_tmp, fifo_out_t_tmp, rel_tol=1e-11):
+        elif math.isclose(fifo_in_t_tmp, fifo_out_t_tmp, rel_tol=1e-12):
             self.__fifo_in_t = fifo_in_t_tmp
             self.__fifo_out_t = fifo_out_t_tmp
             self.__current_t = fifo_in_t_tmp
@@ -85,15 +85,24 @@ class Clock:
             t_in_refi = self.__current_t - \
                 (self.__current_cycle_num - 1) * self.__T_REFI
 
-            if((not self.__in_sw) and
-               t_in_refi > self.__T_RTI + self.__fifo_in_interval / 2
+            if(
+                (not self.__in_sw) and
+               t_in_refi > self.__T_RTI and
+               (
+                    (t_in_refi - self.__fifo_in_interval > self.__T_RTI)
+                    or
+                    math.isclose(
+                    t_in_refi - self.__fifo_in_interval,
+                    self.__T_RTI, rel_tol=1e-12
+                    )
+                )
                ):
                 self.__fifo_in_finish = True
 
             if(self.__in_sw and
                (self.__current_t > self.__sw_end_time or
                 math.isclose(self.__current_t,
-                             self.__sw_end_time, rel_tol=1e-11))
+                             self.__sw_end_time, rel_tol=1e-12))
                ):
                 self.__in_sw = False
                 self.__sw_end_time = -1
@@ -106,7 +115,7 @@ class Clock:
             math.isclose(
                 self.__current_t,
                 self.__current_cycle_num * self.__T_REFI,
-                rel_tol=1e-11)
+                rel_tol=1e-12)
             or
             self.__current_t > self.__current_cycle_num * self.__T_REFI
         ):
@@ -141,15 +150,16 @@ class Clock:
         return self.__current_cycle_num
 
     def is_sw(self):
-        return (self.__sw_end_time - self.__current_t > 0
-                or math.isclose(
-                    self.__current_t, self.__sw_end_time, rel_tol=1e-11
-                )
-                )
+        # return (self.__sw_end_time - self.__current_t > 0
+        #         or math.isclose(
+        #             self.__current_t, self.__sw_end_time, rel_tol=1e-12
+        #         )
+        #         )
+        return self.__in_sw
 
     def is_rti(self):
         t = self.get_current_t_in_refi()
         return (
             t < self.__T_RTI or
-            math.isclose(t, self.__T_RTI, rel_tol=1e-11)
+            math.isclose(t, self.__T_RTI, rel_tol=1e-12)
         )

@@ -9,16 +9,29 @@ from clock import Clock
 from fifo import Fifo, FifoEmpty
 from sdram import Sdram
 
-T_REFI = 7.8e-6  # sec
-T_SW = 30e-9  # sec
-T_RTI = 190e-9  # sec
+# T_REFI = 7.8e-6  # sec
+# T_SW = 30e-9  # sec
+# T_RTI = 190e-9  # sec
+# BL = 8
+# S_IN = 1600e6 / BL  # 64byte
+
 BL = 8
-S_IN = 1600e6 / BL  # 64byte
+S_IN = 1066e6 / BL
+T_CK = 1 / 1066e6 * 2
+T_RCD = 7 * T_CK
+T_RP = 7 * T_CK
+T_CL = 7 * T_CK
+T_CCD = 4 * T_CK
+T_RTP = max(4 * T_CK, 7.5e-9)
+T_RFC = 160e-9
+T_SW = T_RTP + T_RP + T_RCD - T_CCD
+T_RTI = T_SW + T_RFC
+T_REFI = 7.8e-6
 
 NAX_N_SEQ_NUM = 100
 MAX_K = 200
 MAX_N = 100
-TEST_TIMES = 100
+TEST_TIMES = 1
 
 
 class TestFifoModule(unittest.TestCase):
@@ -36,11 +49,13 @@ class TestFifoModule(unittest.TestCase):
 
             # 随机生成K
             random.seed(time.time_ns() * 5 / 11)
-            K = random.randint(1, MAX_K)
+            # K = random.randint(1, MAX_K)
+            K = 4
 
             # 随机生成N
             random.seed(time.time_ns())
-            N = random.randint(1, MAX_N)
+            # N = random.randint(1, MAX_N)
+            N = 67
 
             B = math.ceil(K/N)
 
@@ -48,16 +63,18 @@ class TestFifoModule(unittest.TestCase):
                 (N * T_REFI) * S_IN  # 64byte
             T_SEQ = (N * T_REFI - K * T_SW - N * T_RTI) / K  # sec
             N_SEQ = math.ceil(T_SEQ * S_IN)  # 64byte
-            N_FIFO = math.ceil(abs(
-                -(B*N - K)*(-B*N + K + N) / N * T_SW * S_IN -
-                (T_RTI + B * T_SW) * S_IN - K / N * T_SW * S_IN)
+            N_FIFO = math.ceil(
+                abs(
+                    -(B*N - K)*(-B*N + K + N) / N * T_SW * S_IN -
+                    (T_RTI + B * T_SW) * S_IN - K / N * T_SW * S_IN
+                )
             )
             # 64byte
 
             # 随机生成序列长度
             random.seed(time.time_ns())
-            n_seq_num = random.randint(1, NAX_N_SEQ_NUM)
-            # n_seq_num = 68
+            # n_seq_num = random.randint(1, NAX_N_SEQ_NUM)
+            n_seq_num = 67
 
             # 生成序列
             wfm_64byte_array = [N_SEQ for i in range(n_seq_num)]
@@ -67,8 +84,8 @@ class TestFifoModule(unittest.TestCase):
 
             # 随机生成开始传输时间
             random.seed(time.time_ns())
-            t_start = round(random.uniform(0, T_REFI - T_SW), 9)
-            # t_start = 4082 * 1e-9
+            # t_start = round(random.uniform(0, T_REFI - T_SW), 9)
+            t_start = 4049 * 1e-9
 
             ddr_sdram = Sdram(wfm_64byte_array)
             fifo = Fifo(N_FIFO)
@@ -132,6 +149,8 @@ def print_constant_parameter_info(
     print("S_IN: %d  64bytes/s" % S_IN, file=f)
     print("S_OUT: %d  64bytes/s" % S_OUT, file=f)
     print("T_SEQ: %.6f ns" % (T_SEQ * 1e9), file=f)
+    print("T_SW: %.6f ns" % (T_SW * 1e9), file=f)
+    print("T_RTI: %.6f ns" % (T_RTI * 1e9), file=f)
     print("N_SEQ: %d  64bytes" % N_SEQ, file=f)
     print("N_FIFO: %d  64bytes" % N_FIFO, file=f)
 
