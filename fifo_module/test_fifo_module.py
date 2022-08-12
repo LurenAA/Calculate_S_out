@@ -16,7 +16,7 @@ BL = 8
 S_IN = 1600e6 / BL  # 64byte
 
 NAX_N_SEQ_NUM = 100
-MAX_K = 100
+MAX_K = 200
 MAX_N = 100
 TEST_TIMES = 100
 
@@ -35,7 +35,7 @@ class TestFifoModule(unittest.TestCase):
                 time.strftime("%Y-%m-%d %H-%M-%S", time.localtime(time.time()))
 
             # 随机生成K
-            random.seed(time.time_ns() * 2)
+            random.seed(time.time_ns() * 5 / 11)
             K = random.randint(1, MAX_K)
 
             # 随机生成N
@@ -62,7 +62,8 @@ class TestFifoModule(unittest.TestCase):
             # 生成序列
             wfm_64byte_array = [N_SEQ for i in range(n_seq_num)]
             fifo_in_interval = 1 / S_IN
-            fifo_out_interval = math.ceil(1 / S_OUT * 1e12) / 1e12
+            # fifo_out_interval = math.ceil(1 / S_OUT * 1e12) / 1e12
+            fifo_out_interval = 1 / S_OUT
 
             # 随机生成开始传输时间
             random.seed(time.time_ns())
@@ -121,7 +122,7 @@ class TestFifoModule(unittest.TestCase):
                             file=f
                         )
                 except FifoEmpty:
-                    self.fail()
+                    self.fail("FifoEmpty error happened")
 
 
 def print_constant_parameter_info(

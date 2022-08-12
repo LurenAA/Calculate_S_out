@@ -71,7 +71,7 @@ class Clock:
         elif math.isclose(fifo_in_t_tmp, fifo_out_t_tmp, rel_tol=1e-11):
             self.__fifo_in_t = fifo_in_t_tmp
             self.__fifo_out_t = fifo_out_t_tmp
-            self.__current_t = fifo_out_t_tmp
+            self.__current_t = fifo_in_t_tmp
             fifo_in_time_flag = True
             fifo_out_time_flag = True
 
@@ -102,13 +102,14 @@ class Clock:
             self.__fifo_out_finish = True
 
         # 处理刷新周期
-        if (math.isclose(
-            self.__current_t,
-            self.__current_cycle_num * self.__T_REFI,
-            rel_tol=1e-11)
+        if (
+            math.isclose(
+                self.__current_t,
+                self.__current_cycle_num * self.__T_REFI,
+                rel_tol=1e-11)
             or
             self.__current_t > self.__current_cycle_num * self.__T_REFI
-            ):
+        ):
             self.__current_cycle_num += 1
 
     def fifo_in_finish(self):
@@ -148,4 +149,7 @@ class Clock:
 
     def is_rti(self):
         t = self.get_current_t_in_refi()
-        return (t < self.__T_RTI or math.isclose(t, self.__T_RTI, rel_tol=1e-11))
+        return (
+            t < self.__T_RTI or
+            math.isclose(t, self.__T_RTI, rel_tol=1e-11)
+        )
