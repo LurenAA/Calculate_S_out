@@ -119,6 +119,7 @@ class Clock:
             or
             self.__current_t > self.__current_cycle_num * self.__T_REFI
         ):
+            self.__current_t = self.__current_cycle_num * self.__T_REFI
             self.__current_cycle_num += 1
 
     def fifo_in_finish(self):

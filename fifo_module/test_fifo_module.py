@@ -24,7 +24,7 @@ T_RP = 7 * T_CK
 T_CL = 7 * T_CK
 T_CCD = 4 * T_CK
 T_RTP = max(4 * T_CK, 7.5e-9)
-T_RFC = 160e-9
+T_RFC = 350e-9
 
 T_IN = 1 / S_IN
 T_SW = math.ceil((T_RTP + T_RP + T_RCD - T_CCD) / T_IN) * T_IN
@@ -35,7 +35,8 @@ T_REFI = math.floor(7.8e-6 / T_IN) * T_IN
 NAX_N_SEQ_NUM = 100
 MAX_K = 200
 MAX_N = 100
-TEST_TIMES = 1
+TEST_TIMES = 100
+CYCCLE_N_MAX_LIMIT = 5000
 
 
 class TestFifoModule(unittest.TestCase):
@@ -48,18 +49,22 @@ class TestFifoModule(unittest.TestCase):
 
     def test_if_empty(self):
         for o in range(TEST_TIMES):
+            # print(o)
+
             TestFifoModule.file_str = TestFifoModule.dir_str + "/" + \
-                time.strftime("%Y-%m-%d %H-%M-%S", time.localtime(time.time()))
+                time.strftime("%Y-%m-%d %H-%M-%S ",
+                              time.localtime(time.time())) + \
+                "----%f" % (time.time())
 
             # 随机生成K
             random.seed(time.time_ns() * 5 / 11)
-            # K = random.randint(1, MAX_K)
-            K = 4
+            K = random.randint(1, MAX_K)
+            # K = 1
 
             # 随机生成N
             random.seed(time.time_ns())
-            # N = random.randint(1, MAX_N)
-            N = 67
+            N = random.randint(1, MAX_N)
+            # N = 100
 
             B = math.ceil(K/N)
 
@@ -77,8 +82,8 @@ class TestFifoModule(unittest.TestCase):
 
             # 随机生成序列长度
             random.seed(time.time_ns())
-            # n_seq_num = random.randint(1, NAX_N_SEQ_NUM)
-            n_seq_num = 67
+            n_seq_num = random.randint(1, NAX_N_SEQ_NUM)
+            # n_seq_num = 100
 
             # 生成序列
             wfm_64byte_array = [N_SEQ for i in range(n_seq_num)]
@@ -88,8 +93,8 @@ class TestFifoModule(unittest.TestCase):
 
             # 随机生成开始传输时间
             random.seed(time.time_ns())
-            # t_start = round(random.uniform(0, T_REFI - T_SW), 9)
-            t_start = 4049 * 1e-9
+            t_start = round(random.uniform(0, T_REFI - T_SW), 9)
+            # t_start = 6029 * 1e-9
 
             ddr_sdram = Sdram(wfm_64byte_array)
             fifo = Fifo(N_FIFO)
@@ -108,6 +113,10 @@ class TestFifoModule(unittest.TestCase):
 
                 try:
                     while(not ddr_sdram.get_finished_tranfer()):
+                        # float accuracy limitation
+                        if clock.get_current_cycle_num() > CYCCLE_N_MAX_LIMIT:
+                            break
+
                         clock.run()
                         fin = clock.fifo_in_finish()
                         ffull = fifo.is_full()
@@ -144,6 +153,8 @@ class TestFifoModule(unittest.TestCase):
                         )
                 except FifoEmpty:
                     self.fail("FifoEmpty error happened")
+                except Exception:
+                    self.fail(sys.exc_info())
 
 
 def print_constant_parameter_info(
@@ -160,4 +171,4 @@ def print_constant_parameter_info(
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
