@@ -2,6 +2,7 @@ import math
 import random
 import unittest
 import sys
+import math
 import os
 import time
 
@@ -24,9 +25,12 @@ T_CL = 7 * T_CK
 T_CCD = 4 * T_CK
 T_RTP = max(4 * T_CK, 7.5e-9)
 T_RFC = 160e-9
-T_SW = T_RTP + T_RP + T_RCD - T_CCD
-T_RTI = T_SW + T_RFC
-T_REFI = 7.8e-6
+
+T_IN = 1 / S_IN
+T_SW = math.ceil((T_RTP + T_RP + T_RCD - T_CCD) / T_IN) * T_IN
+T_RTI = math.ceil((T_SW + T_RFC) / T_IN) * T_IN
+T_REFI = math.floor(7.8e-6 / T_IN) * T_IN
+
 
 NAX_N_SEQ_NUM = 100
 MAX_K = 200
