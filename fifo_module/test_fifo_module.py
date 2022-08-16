@@ -36,7 +36,6 @@ NAX_N_SEQ_NUM = 100
 MAX_K = 200
 MAX_N = 100
 TEST_TIMES = 100
-CYCCLE_N_MAX_LIMIT = 5000
 
 
 class TestFifoModule(unittest.TestCase):
@@ -113,10 +112,6 @@ class TestFifoModule(unittest.TestCase):
 
                 try:
                     while(not ddr_sdram.get_finished_tranfer()):
-                        # float accuracy limitation
-                        if clock.get_current_cycle_num() > CYCCLE_N_MAX_LIMIT:
-                            break
-
                         clock.run()
                         fin = clock.fifo_in_finish()
                         ffull = fifo.is_full()
@@ -166,6 +161,7 @@ def print_constant_parameter_info(
     print("T_SEQ: %.6f ns" % (T_SEQ * 1e9), file=f)
     print("T_SW: %.6f ns" % (T_SW * 1e9), file=f)
     print("T_RTI: %.6f ns" % (T_RTI * 1e9), file=f)
+    print("T_REFI: %.6f ns" % (T_REFI * 1e9), file=f)
     print("N_SEQ: %d  64bytes" % N_SEQ, file=f)
     print("N_FIFO: %d  64bytes" % N_FIFO, file=f)
 
