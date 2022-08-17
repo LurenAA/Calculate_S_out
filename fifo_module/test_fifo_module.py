@@ -35,7 +35,7 @@ T_REFI = math.floor(7.8e-6 / T_IN) * T_IN
 NAX_N_SEQ_NUM = 100
 MAX_K = 200
 MAX_N = 100
-TEST_TIMES = 100
+TEST_TIMES = 10000
 
 
 class TestFifoModule(unittest.TestCase):
@@ -74,7 +74,7 @@ class TestFifoModule(unittest.TestCase):
             N_FIFO = math.ceil(
                 abs(
                     -(B*N - K)*(-B*N + K + N) / N * T_SW * S_IN -
-                    (T_RTI + B * T_SW) * S_IN - K / N * T_SW * S_IN
+                    (T_RTI + B * T_SW) * S_OUT - K / N * T_SW * S_IN
                 )
             )
             # 64byte
