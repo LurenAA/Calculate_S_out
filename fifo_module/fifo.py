@@ -5,7 +5,9 @@ class FifoEmpty(Exception):
 class Fifo:
     def __init__(self, N_64Byte_FIFO_MAX) -> None:
         self.__N_64Byte_FIFO_MAX = N_64Byte_FIFO_MAX
+        # 最大值
         self.__n_64byte_fifo_current = N_64Byte_FIFO_MAX
+        # 当前值
 
     def send_out(self):
         self.__n_64byte_fifo_current -= 1

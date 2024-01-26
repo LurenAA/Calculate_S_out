@@ -6,7 +6,9 @@ class Sdram:
         assert(len(wfm_64byte_array))
 
         self.__wfm_64byte_array = wfm_64byte_array
+        # 要传输的波形序列
         self.__idx = 0
+        # 播放到的序列id
         self.__current_wfm_64byte = wfm_64byte_array[0]
         self.__finished_tranfer = False
 

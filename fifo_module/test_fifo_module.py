@@ -17,25 +17,28 @@ from sdram import Sdram
 # S_IN = 1600e6 / BL  # 64byte
 
 BL = 8
-S_IN = 1066e6 / BL
-T_CK = 1 / 1066e6 * 2
-T_RCD = 7 * T_CK
-T_RP = 7 * T_CK
-T_CL = 7 * T_CK
-T_CCD = 4 * T_CK
-T_RTP = max(4 * T_CK, 7.5e-9)
-T_RFC = 350e-9
+# S_IN = 1066e6 / BL
+S_IN = 1600e6 / BL
+# T_CK = 1 / 1066e6 * 2
+# T_RCD = 7 * T_CK
+# T_RP = 7 * T_CK
+# T_CL = 7 * T_CK
+# T_CCD = 4 * T_CK
+# T_RTP = max(4 * T_CK, 7.5e-9)
+# T_RFC = 350e-9
 
 T_IN = 1 / S_IN
-T_SW = math.ceil((T_RTP + T_RP + T_RCD - T_CCD) / T_IN) * T_IN
-T_RTI = math.ceil((T_SW + T_RFC) / T_IN) * T_IN
-T_REFI = math.floor(7.8e-6 / T_IN) * T_IN
+# T_SW = math.ceil((T_RTP + T_RP + T_RCD - T_CCD) / T_IN) * T_IN
+# T_RTI = math.ceil((T_SW + T_RFC) / T_IN) * T_IN
+# T_REFI = math.floor(7.8e-6 / T_IN) * T_IN
+T_SW = 72.5 * 1e-9
+T_RTI = 332.5 * 1e-9
+T_REFI = 3900 * 1e-9
 
-
-NAX_N_SEQ_NUM = 100
-MAX_K = 200
-MAX_N = 100
-TEST_TIMES = 10000
+NAX_N_SEQ_NUM = 10000
+# MAX_K = 200
+# MAX_N = 100
+TEST_TIMES = 100
 
 
 class TestFifoModule(unittest.TestCase):
@@ -56,33 +59,39 @@ class TestFifoModule(unittest.TestCase):
                 "----%f" % (time.time())
 
             # 随机生成K
-            random.seed(time.time_ns() * 5 / 11)
-            K = random.randint(1, MAX_K)
-            # K = 1
+            # random.seed(time.time_ns() * 5 / 11)
+            # K = random.randint(1, MAX_K)
+            K = 2641
 
             # 随机生成N
-            random.seed(time.time_ns())
-            N = random.randint(1, MAX_N)
-            # N = 100
+            # random.seed(time.time_ns())
+            # N = random.randint(K, MAX_N + MAX_K)
+            N = 232
 
-            B = math.ceil(K/N)
+            # B = math.ceil(K/N)
+            # M = math.floor(N/K)
 
-            S_OUT = (N * T_REFI - K * T_SW - N * T_RTI) / \
+            S_OUT = (N * T_REFI - K * T_SW - N * T_RTI) /        \
                 (N * T_REFI) * S_IN  # 64byte
             T_SEQ = (N * T_REFI - K * T_SW - N * T_RTI) / K  # sec
             N_SEQ = math.ceil(T_SEQ * S_IN)  # 64byte
+
+            # delta_n = T_SW * S_IN * K * (1 - (K + (K - 1) * (M - 1)) / N)
+            # first_refi_n = S_OUT * T_SW
+            # last_refi_n = T_RTI * S_OUT + K / N * T_SW * S_IN
+
+            # N_FIFO = math.ceil(
+            #     abs(delta_n + first_refi_n + last_refi_n)
+            # )
             N_FIFO = math.ceil(
-                abs(
-                    -(B*N - K)*(-B*N + K + N) / N * T_SW * S_IN -
-                    (T_RTI + B * T_SW) * S_OUT - K / N * T_SW * S_IN
-                )
+                2 * T_SW * S_OUT + T_SW * S_IN + T_RTI * S_OUT
             )
             # 64byte
 
-            # 随机生成序列长度
-            random.seed(time.time_ns())
-            n_seq_num = random.randint(1, NAX_N_SEQ_NUM)
-            # n_seq_num = 100
+            # 随机生成序列数量
+            # random.seed(time.time_ns())
+            # n_seq_num = random.randint(1, NAX_N_SEQ_NUM)
+            n_seq_num = 28
 
             # 生成序列
             wfm_64byte_array = [N_SEQ for i in range(n_seq_num)]
@@ -91,9 +100,9 @@ class TestFifoModule(unittest.TestCase):
             fifo_out_interval = 1 / S_OUT
 
             # 随机生成开始传输时间
-            random.seed(time.time_ns())
+            # random.seed(time.time_ns())
             t_start = round(random.uniform(0, T_REFI - T_SW), 9)
-            # t_start = 6029 * 1e-9
+            # t_start = 3900 * 1e-9
 
             ddr_sdram = Sdram(wfm_64byte_array)
             fifo = Fifo(N_FIFO)

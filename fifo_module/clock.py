@@ -9,9 +9,9 @@ class Clock:
                  T_SW,
                  T_RTI,
                  t_start=None) -> None:
-        self.__fifo_in_t = 0
-        self.__fifo_out_t = -1
-        self.__send_start_flag = False
+        self.__fifo_in_t = 0   # fifo下次接收SDRAM数据的时间点
+        self.__fifo_out_t = -1  # fifo下次输出数据到DAC的时间点
+        self.__send_start_flag = False  # 是否开始传输的标志位
         self.__current_t = 0
         self.__t_start = t_start
 
@@ -139,7 +139,7 @@ class Clock:
     def set_sw(self):
         self.__in_sw = True
 
-        t_in_refi = self.__current_t - (self.__current_cycle_num - 1) *\
+        t_in_refi = self.__current_t - (self.__current_cycle_num - 1) * \
             self.__T_REFI
 
         if t_in_refi > self.__T_REFI - self.__T_SW:
